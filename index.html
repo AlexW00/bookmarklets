@@ -3,6 +3,25 @@
 	<head>
 		<title>Bookmarklets</title>
 	</head>
+	<script>
+		function addBookmarklet(name, url) {
+			// open bookmark prompt
+			// Firefox
+			const bm = createBookmarkletUrl(url);
+			if (window.sidebar) {
+				window.sidebar.addPanel(name, bm, "");
+			} else if (window.external) {
+				// IE
+				window.external.AddFavorite(bm, name);
+			} else if (window.opera && window.print) {
+				alert("Unsupported, add directly");
+			}
+		}
+
+		function createBookmarkletUrl(url) {
+			return `javascript:(function(){var s=document.createElement('script');s.src='${url}';document.body.appendChild(s);})();`;
+		}
+	</script>
 
 	<body>
 		<h1>List of utility Bookmarklets</h1>
@@ -10,11 +29,7 @@
 			<li>
 				<a href="./captureScroll.js">Capture Scroll</a>
 				<!-- button to add bookmarklet directly -->
-				<button
-					onclick="javascript:(function(){var s=document.createElement('script');s.src='./captureScroll.js';document.body.appendChild(s);})();"
-				>
-					Add Bookmarklet
-				</button>
+				<button onclick="">Add Bookmarklet</button>
 			</li>
 		</ul>
 	</body>
