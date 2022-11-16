@@ -1,6 +1,11 @@
 javascript: (function inject() {
 	console.log("loaded bookmarklet");
-	const readingIndex = prompt("Enter reading index: ", "1");
+	const readingIndexInput = prompt("Enter reading index: ", "1").trim();
+	if (isNaN(readingIndexInput)) {
+		alert("Input is not a number!");
+		return;
+	}
+	const readingIndex = parseInt(readingIndexInput) - 1;
 	const readingListElement = getReadingListElement(readingIndex);
 
 	console.log("readingListElement: ", readingListElement);
@@ -17,14 +22,17 @@ javascript: (function inject() {
 		const readingHeader = findByContent("Reading ")[0];
 		const readingContainer = readingHeader.parentElement;
 		const readingList = readingContainer.querySelector(".list-group");
-		const readingListItems = readingList.querySelectorAll(".row");
+		const readingListItems = readingList.querySelectorAll(".list-group-item");
 		return readingListItems[readingIndex];
 	}
 
 	const playButtonLink = readingListElement.querySelector("a"),
 		dataReading = playButtonLink.getAttribute("data-reading");
 	console.log("dataReading: ", dataReading);
-	const jwt = dataReading.match(/"ey.+"/)[0]?.replace(/"/g, "");
+	const jwt = dataReading
+		.match(/"ey.+"/)[0]
+		?.replace(/",.+/g, "")
+		.replace(/"/g, "");
 	console.log("jwt: ", jwt);
 	const text = dataReading.match(/<phoneme.+<\/phoneme>/)[0];
 	console.log("text: ", text);
@@ -128,20 +136,26 @@ javascript: (function inject() {
 	}
 
 	function urlEncode(str) {
-		const urlEncoded = encodeURIComponent(str) + "";
-		const finalUrlEncoded = urlEncoded.replace(/%20/g, "+");
-		console.log("urlEncoded: ", finalUrlEncoded);
+		const urlEncoded = encodeURIComponent(str).toString(),
+			slashPattern = "%" + "2F",
+			equalsPattern = "%" + "3D",
+			finalUrlEncoded = urlEncoded
+				.replace(new RegExp(slashPattern, "g"), "/")
+				.replace(new RegExp(equalsPattern, "g"), "=");
 		return finalUrlEncoded;
 	}
 
-	const url =
+	const audioUrl =
 		"https://www.japandict.com/voice/read?text=" +
 		urlEncode(text) +
-		"outputFormat=ogg_vorbis&jwt=" +
+		"&outputFormat=ogg_vorbis&jwt=" +
 		urlEncode(jwt) +
 		"&vid=1";
 
-	console.log("url: ", url);
+	console.log("audioUrl: ", audioUrl);
+
+	const imageSrc = document.querySelector("img.img-fluid")?.src;
+	console.log("imageSrc: ", imageSrc);
 
 	function playAudio(blob) {
 		const audio = new Audio();
@@ -149,7 +163,7 @@ javascript: (function inject() {
 		audio.play();
 	}
 
-	fetch(url)
+	fetch(audioUrl)
 		.then((response) => response.blob())
 		.then((blob) => playAudio(blob));
 })();
